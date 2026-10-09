@@ -22,19 +22,13 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+  <!-- Page text, projects and sections all come from js/content.js — edit them with the site editor (edit-site.bat). -->
   <a class="skip-link" href="#portfolio">Skip to portfolio</a>
 
   <!-- Slim nav that slides in once the hero is scrolled past -->
   <header class="topbar" id="topbar">
-    <a class="topbar__mark" href="#home" aria-label="Back to top">
-      <img src="https://static.wixstatic.com/media/34fe06_97cfa243324f4d9ba4bf62c6ed4bf573~mv2.png" alt="Joshua Moore logo">
-    </a>
-    <nav class="topbar__links" aria-label="Primary">
-      <a href="#portfolio">Portfolio</a>
-      <a href="#about">About</a>
-      <a href="#contact">Contact</a>
-      <a href="https://drive.google.com/drive/folders/1xvBI8tW6UAPffMSSRff45K5Zni20BYux?usp=sharing" target="_blank" rel="noopener">Resume&nbsp;↗</a>
-    </nav>
+    <a class="topbar__mark" href="#home" aria-label="Back to top"><img data-logo alt="Logo"></a>
+    <nav class="topbar__links" id="topbar-links" aria-label="Primary"></nav>
   </header>
 
   <main>
@@ -42,21 +36,21 @@
     <section class="hero" id="home">
       <div class="hero__inner">
         <div class="hero__intro">
-          <p class="eyebrow">Portfolio · 2026</p>
-          <h1 class="hero__name">Joshua Moore</h1>
-          <p class="hero__role">Technical Artist</p>
-          <p class="hero__sub">Shaders, real-time VFX &amp; artist tools.<br>Game Development at SCAD.</p>
+          <p class="eyebrow" id="hero-eyebrow"></p>
+          <h1 class="hero__name" id="hero-name"></h1>
+          <p class="hero__role" id="hero-role"></p>
+          <p class="hero__sub" id="hero-tagline"></p>
 
           <nav class="hero__menu" aria-label="Sections">
             <a class="menu-btn" href="#portfolio"><span class="menu-btn__idx">01</span>Portfolio</a>
             <a class="menu-btn" href="#about"><span class="menu-btn__idx">02</span>About Me</a>
             <a class="menu-btn" href="#contact"><span class="menu-btn__idx">03</span>Contact</a>
-            <a class="menu-btn" href="https://drive.google.com/drive/folders/1xvBI8tW6UAPffMSSRff45K5Zni20BYux?usp=sharing" target="_blank" rel="noopener"><span class="menu-btn__idx">04</span>Resume<span class="menu-btn__ext" aria-hidden="true">↗</span></a>
+            <a class="menu-btn" data-resume target="_blank" rel="noopener"><span class="menu-btn__idx">04</span>Resume<span class="menu-btn__ext" aria-hidden="true">↗</span></a>
           </nav>
         </div>
 
         <div class="hero__logo">
-          <img src="https://static.wixstatic.com/media/34fe06_97cfa243324f4d9ba4bf62c6ed4bf573~mv2.png" alt="JM logo" width="420" height="442">
+          <img data-logo alt="Logo" width="420" height="442">
         </div>
       </div>
 
@@ -87,37 +81,16 @@
 
       <div class="about__grid">
         <div class="about__text">
-          <p class="about__lead">I'm a Technical Artist from Middle Georgia, currently pursuing a degree in Game Development at the Savannah College of Art and Design.</p>
-          <p>Through video games, I hope to create experiences that unite communities and bring people together.</p>
-          <p>I like working in the space between art and engineering — writing shaders, building real-time VFX, and making tools that help other artists iterate faster.</p>
-
-          <ul class="facts">
-            <li><span class="facts__k">Studying</span><span class="facts__v">Game Development, SCAD</span></li>
-            <li><span class="facts__k">Based in</span><span class="facts__v">Georgia, USA</span></li>
-            <li><span class="facts__k">Recognition</span><span class="facts__v">Best in Show, Global Game Jam 2026 (Savannah)</span></li>
-          </ul>
+          <p class="about__lead" id="about-lead"></p>
+          <div id="about-paras"></div>
+          <ul class="facts" id="about-facts"></ul>
         </div>
-
-        <div class="toolbox">
-          <div class="toolbox__group">
-            <h3>Engines</h3>
-            <ul class="chips"><li>Unreal Engine 5</li><li>Unity</li></ul>
-          </div>
-          <div class="toolbox__group">
-            <h3>Shaders &amp; VFX</h3>
-            <ul class="chips"><li>Material Editor</li><li>Niagara</li><li>Render Targets</li><li>Houdini</li><li>Copernicus</li><li>VEX</li></ul>
-          </div>
-          <div class="toolbox__group">
-            <h3>Texturing</h3>
-            <ul class="chips"><li>Substance Designer</li><li>Substance Painter</li></ul>
-          </div>
-          <div class="toolbox__group">
-            <h3>Code &amp; DCC</h3>
-            <ul class="chips"><li>Python</li><li>C#</li><li>Maya</li></ul>
-          </div>
-        </div>
+        <div class="toolbox" id="about-toolbox"></div>
       </div>
     </section>
+
+    <!-- ============ CUSTOM SECTIONS (added in the editor) ============ -->
+    <div id="custom-sections"></div>
 
     <!-- ============ CONTACT ============ -->
     <section class="contact" id="contact">
@@ -127,26 +100,21 @@
       </div>
 
       <div class="contact__card">
-        <p class="contact__pitch">Open to internships and entry-level technical art roles. Let's make something together.</p>
-        <a class="contact__email" href="mailto:joshua.moore0523@gmail.com">joshua.moore0523@gmail.com</a>
-
-        <div class="contact__links">
-          <a class="link-pill" href="http://www.linkedin.com/in/joshua-moore-0ba22627a" target="_blank" rel="noopener">LinkedIn ↗</a>
-          <a class="link-pill" href="https://www.artstation.com/jmooreinteractive" target="_blank" rel="noopener">ArtStation ↗</a>
-          <a class="link-pill" href="https://www.instagram.com/jmooreinteractive/" target="_blank" rel="noopener">Instagram ↗</a>
-          <button class="link-pill" type="button" id="copy-discord" data-copy="jmooreinteractive">Discord: <span>jmooreinteractive</span></button>
-          <a class="link-pill" href="https://drive.google.com/drive/folders/1xvBI8tW6UAPffMSSRff45K5Zni20BYux?usp=sharing" target="_blank" rel="noopener">Resume ↗</a>
-        </div>
+        <p class="contact__pitch" id="contact-pitch"></p>
+        <a class="contact__email" id="contact-email"></a>
+        <div class="contact__links" id="contact-links"></div>
       </div>
     </section>
   </main>
 
   <footer class="footer">
-    <span>© <span id="year">2026</span> Joshua Moore</span>
+    <span>© <span id="year">2026</span> <span id="footer-name"></span></span>
     <span class="footer__note">Hosted on GitHub Pages</span>
   </footer>
 
-  <script src="js/projects.js"></script>
+  <script src="js/content.js"></script>
+  <script src="js/blocks.js"></script>
+  <script src="js/plugins.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>

@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Site Editor</title>
+  <link rel="icon" href="https://static.wixstatic.com/media/34fe06_97cfa243324f4d9ba4bf62c6ed4bf573~mv2.png" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="editor.css">
+</head>
+<body>
+  <div class="app" id="app">
+    <!-- Sidebar: folder connection, navigation, save -->
+    <aside class="side">
+      <div class="side__brand">
+        <span class="side__title">Site Editor</span>
+        <a class="side__open" href="../index.html" target="_blank" rel="noopener" title="Open the website in a new tab">View site ↗</a>
+      </div>
+      <div class="folder" id="folder"></div>
+      <nav class="side__nav" id="nav" aria-label="Editor sections"></nav>
+      <div class="side__foot">
+        <button class="btn btn--primary btn--block" id="save" type="button" disabled>Saved</button>
+        <p class="side__hint">Saving writes to your website folder. To publish, commit &amp; push it (e.g. with GitHub Desktop).</p>
+      </div>
+    </aside>
+
+    <!-- Form for whatever is selected in the sidebar -->
+    <main class="main" id="main">
+      <p class="loading">Loading your content…</p>
+    </main>
+
+    <!-- Live preview of the real site -->
+    <section class="preview" id="preview" aria-label="Live preview">
+      <div class="preview__bar">
+        <span class="preview__label">Live preview</span>
+        <div class="seg" role="group" aria-label="Preview size">
+          <button type="button" class="seg__btn is-on" data-device="desktop">Desktop</button>
+          <button type="button" class="seg__btn" data-device="phone">Phone</button>
+        </div>
+        <button type="button" class="icon-btn" id="preview-reload" title="Reload preview">⟳</button>
+        <button type="button" class="icon-btn" id="preview-hide" title="Hide preview">⇥</button>
+      </div>
+      <div class="preview__stage">
+        <iframe id="preview-frame" title="Website preview"></iframe>
+      </div>
+    </section>
+    <button type="button" class="preview-show" id="preview-show" hidden>Show preview</button>
+  </div>
+
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+
+  <script src="../js/blocks.js"></script>
+  <script src="../js/plugins.js"></script>
+  <script src="editor.js"></script>
+</body>
+</html>
