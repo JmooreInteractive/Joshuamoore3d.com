@@ -716,6 +716,37 @@
     return root;
   }
 
+  // ================================================================ block clipboard
+  // Copied blocks can be pasted into any project or home section. Kept in localStorage so the
+  // clipboard survives reloads. Media paths are copied as-is — the files stay where they are.
+
+  const CLIP_KEY = "site-editor:clipboard";
+  let clip = (() => {
+    try {
+      const c = JSON.parse(localStorage.getItem(CLIP_KEY));
+      return c && Array.isArray(c.blocks) && c.blocks.length ? c : null;
+    } catch {
+      return null;
+    }
+  })();
+
+  function setClip(next) {
+    clip = next;
+    try {
+      if (clip) localStorage.setItem(CLIP_KEY, JSON.stringify(clip));
+      else localStorage.removeItem(CLIP_KEY);
+    } catch {}
+  }
+
+  const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
+
+  // A "section" is a heading plus every block after it, up to the next heading.
+  function sectionEnd(blocks, i) {
+    let j = i + 1;
+    while (j < blocks.length && blocks[j].type !== "heading") j++;
+    return j;
+  }
+
   // ================================================================ block editor
 
   let picker = null;
@@ -727,13 +758,29 @@
   function onOutside(e) {
     if (picker && !picker.contains(e.target)) closePicker();
   }
-  function openPicker(anchor, onPick) {
+  function openPicker(anchor, onPick, onPaste) {
     closePicker();
     const groups = {};
     for (const type of B.order) (groups[B.types[type].group] = groups[B.types[type].group] || []).push(B.types[type]);
     picker = h(
       "div",
       { class: "picker", role: "menu" },
+      clip && onPaste
+        ? h(
+            "button",
+            {
+              type: "button",
+              class: "picker__paste",
+              role: "menuitem",
+              onclick: () => {
+                closePicker();
+                onPaste();
+              },
+            },
+            h("span", { class: "picker__icon" }, "⎘"),
+            h("span", {}, `Paste ${clip.label}`, h("small", {}, `${plural(clip.blocks.length, "block")} from ${clip.source}`))
+          )
+        : null,
       Object.entries(groups).map(([name, defs]) =>
         h(
           "div",
@@ -787,9 +834,12 @@
     return "";
   }
 
-  function blocksEditor(blocks, folder) {
+  // sourceName() names where these blocks live (project / section title) for the clipboard label.
+  function blocksEditor(blocks, folder, sourceName) {
     const root = h("div", { class: "blocks" });
     let justAdded = null;
+    let pasted = new Set();
+    let cards = [];
 
     const rerender = () => fill(root, ...build());
     const insertAt = (i, type) => {
@@ -799,23 +849,89 @@
       rerender();
       changed();
     };
-    const inserter = (i) =>
-      h("div", { class: "inserter" }, h("button", { type: "button", title: "Insert a block here", onclick: (e) => openPicker(e.currentTarget, (t) => insertAt(i, t)) }, "+"));
+    const pasteAt = (i) => {
+      if (!clip) return;
+      const copies = clone(clip.blocks);
+      blocks.splice(i, 0, ...copies);
+      pasted = new Set(copies);
+      rerender();
+      changed();
+      toast(`Pasted ${clip.label}.`, "ok");
+    };
+    const copy = (list, label) => {
+      setClip({ label, source: sourceName(), blocks: clone(list) });
+      rerender();
+      toast(`Copied ${label}. Open another project and paste it with “Paste at end” or any + button.`, "ok", 5000);
+    };
+    const pickAt = (i) => (e) => openPicker(e.currentTarget, (t) => insertAt(i, t), () => pasteAt(i));
+    const inserter = (i) => h("div", { class: "inserter" }, h("button", { type: "button", title: "Insert or paste a block here", onclick: pickAt(i) }, "+"));
+
+    function toolbar() {
+      return h(
+        "div",
+        { class: "clipbar" },
+        h("button", { type: "button", class: "btn btn--small", disabled: !blocks.length, onclick: () => copy(blocks, `all ${plural(blocks.length, "block")}`) }, "Copy all blocks"),
+        clip
+          ? h(
+              "div",
+              { class: "clipbar__clip" },
+              h("span", { class: "clipbar__label", title: `${clip.label} — ${plural(clip.blocks.length, "block")} from ${clip.source}` }, h("strong", {}, "Clipboard: "), clip.label, h("span", { class: "clipbar__src" }, ` · from ${clip.source}`)),
+              h("button", { type: "button", class: "btn btn--small btn--primary", onclick: () => pasteAt(blocks.length) }, "Paste at end"),
+              tool("✕", "Clear clipboard", false, () => {
+                setClip(null);
+                rerender();
+              })
+            )
+          : h("span", { class: "clipbar__hint" }, "Tip: “Copy section” on a heading copies it plus everything under it.")
+      );
+    }
 
     function build() {
-      const out = [];
+      cards = [];
+      const out = [toolbar()];
       blocks.forEach((b, i) => {
         if (i > 0) out.push(inserter(i));
-        out.push(blockCard(b, i));
+        out.push((cards[i] = blockCard(b, i)));
       });
-      out.push(h("button", { type: "button", class: "add-block", onclick: (e) => openPicker(e.currentTarget, (t) => insertAt(blocks.length, t)) }, "+ Add block"));
+      out.push(h("button", { type: "button", class: "add-block", onclick: pickAt(blocks.length) }, clip ? "+ Add or paste a block" : "+ Add block"));
+      const fresh = cards.filter((c) => c.classList.contains("is-new"));
+      if (pasted.size && fresh.length) {
+        pasted = new Set();
+        requestAnimationFrame(() => {
+          fresh[0].scrollIntoView({ block: "nearest", behavior: "smooth" });
+          setTimeout(() => fresh.forEach((c) => c.classList.remove("is-new")), 1400);
+        });
+      }
       return out;
     }
+
+    // Highlights the blocks a "Copy section" click would take.
+    const markSection = (i, on) => cards.slice(i, sectionEnd(blocks, i)).forEach((c) => c.classList.toggle("is-in-section", on));
 
     function blockCard(b, i) {
       const def = B.types[b.type];
       const isCollapsed = collapsed.has(b);
       const summary = h("span", { class: "block__summary" }, summarize(b, def));
+      const isHeading = b.type === "heading";
+      const copySection = isHeading
+        ? h(
+            "button",
+            {
+              type: "button",
+              class: "tool tool--text",
+              title: "Copy this heading and everything under it (up to the next heading)",
+              onmouseenter: () => markSection(i, true),
+              onmouseleave: () => markSection(i, false),
+              onfocus: () => markSection(i, true),
+              onblur: () => markSection(i, false),
+              onclick: () => {
+                const end = sectionEnd(blocks, i);
+                copy(blocks.slice(i, end), `“${b.text || "Untitled"}” section`);
+              },
+            },
+            "Copy section"
+          )
+        : null;
       const head = h(
         "div",
         {
@@ -834,6 +950,12 @@
         h(
           "span",
           { class: "block__tools" },
+          copySection,
+          h(
+            "button",
+            { type: "button", class: "tool tool--text", title: "Copy this block to paste into another project", onclick: () => copy([b], `${def ? def.label.toLowerCase() : "block"} block`) },
+            "Copy"
+          ),
           tool("↑", "Move up", i === 0, () => move(blocks, i, -1) && rerender()),
           tool("↓", "Move down", i === blocks.length - 1, () => move(blocks, i, 1) && rerender()),
           tool("⧉", "Duplicate", false, () => {
@@ -855,7 +977,7 @@
           )
         )
       );
-      const cardEl = h("div", { class: "block" + (isCollapsed ? " is-collapsed" : "") + (b === justAdded ? " is-new" : "") }, head);
+      const cardEl = h("div", { class: "block" + (isCollapsed ? " is-collapsed" : "") + (b === justAdded || pasted.has(b) ? " is-new" : "") }, head);
       if (def && !isCollapsed) {
         const onAny = () => (summary.textContent = summarize(b, def));
         cardEl.append(h("div", { class: "block__body" }, def.fields.map((f) => blockField(b, f, def, folder, onAny))));
@@ -1089,7 +1211,11 @@
           h("div", { class: "field" }, h("span", { class: "field__label" }, "Navigation"), checkbox(sec, "nav", "Show in the top bar"))
         )
       ),
-      card("Content", "Hover between blocks to insert one. Click a block's title bar to collapse it.", blocksEditor(sec.blocks, folder)),
+      card(
+        "Content",
+        "Hover between blocks to insert or paste one. Click a block's title bar to collapse it.",
+        blocksEditor(sec.blocks, folder, () => sec.title || "Untitled section")
+      ),
     ];
   }
 
@@ -1247,7 +1373,11 @@
           "Add button"
         )
       ),
-      card("Page content", "Build the project page from blocks. Hover between blocks to insert one; click a block's title bar to collapse it.", blocksEditor(p.body, folder)),
+      card(
+        "Page content",
+        "Build the project page from blocks. Hover between blocks to insert or paste one; click a block's title bar to collapse it.",
+        blocksEditor(p.body, folder, () => p.title || "Untitled project")
+      ),
     ];
   }
 

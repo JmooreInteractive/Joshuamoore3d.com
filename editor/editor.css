@@ -135,6 +135,8 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .tool:hover:not(:disabled) { background: var(--line); color: var(--text); }
 .tool:disabled { opacity: .3; cursor: default; }
 .tool--danger:hover:not(:disabled) { background: color-mix(in srgb, var(--danger) 25%, transparent); color: #fff; }
+.tool--text { width: auto; padding: 0 8px; font-size: 11.5px; font-weight: 600; color: var(--muted); }
+.tool--text:hover:not(:disabled) { background: var(--accent-hover); color: #fff; }
 
 /* -------------------------------------------------------------------- views */
 
@@ -229,6 +231,19 @@ select { cursor: pointer; }
 }
 .block:hover { border-color: var(--line-2); }
 .block.is-new { border-color: var(--accent-text); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent); }
+.block.is-in-section { border-color: var(--accent-text); background: color-mix(in srgb, var(--accent) 12%, var(--panel)); }
+
+/* clipboard bar above the blocks */
+.clipbar {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  margin-bottom: 12px; padding: 8px 10px; border-radius: 10px;
+  background: var(--input); border: 1px solid var(--line);
+}
+.clipbar__clip { margin-left: auto; display: flex; align-items: center; gap: 8px; min-width: 0; max-width: 100%; }
+.clipbar__label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; color: var(--text); }
+.clipbar__label strong { color: var(--accent-text); font-weight: 600; }
+.clipbar__src { color: var(--dim); }
+.clipbar__hint { margin-left: auto; font-size: 12px; color: var(--dim); }
 
 .block__head {
   display: flex; align-items: center; gap: 10px;
@@ -273,6 +288,14 @@ select { cursor: pointer; }
   background: #1f2025; border: 1px solid var(--line-2); box-shadow: 0 20px 60px rgba(0,0,0,.6);
 }
 .picker__group { display: grid; align-content: start; gap: 2px; }
+.picker__paste {
+  grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; margin-bottom: 8px; padding: 10px 12px;
+  border: 1px dashed var(--accent-text); border-radius: 9px; text-align: left; cursor: pointer;
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+}
+.picker__paste:hover, .picker__paste:focus-visible { background: var(--accent-hover); outline: none; }
+.picker__paste small { display: block; font-size: 11.5px; color: var(--muted); }
+.picker__paste:hover small { color: rgba(255, 255, 255, .8); }
 .picker__title { margin: 0 0 4px 8px; font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); }
 .picker__item {
   display: flex; align-items: center; gap: 8px; padding: 7px 8px;
