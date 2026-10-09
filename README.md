@@ -5,12 +5,15 @@ Plain HTML/CSS/JS — no build step. Hosted on GitHub Pages.
 
 ## Editing the site
 
-1. Double-click **`edit-site.bat`**. It starts a small local server and opens the editor in your browser
-   (use **Chrome or Edge** — they can save straight into this folder).
-2. The first time, click **Connect website folder** and pick this folder (the one with `index.html`).
-   The editor remembers it after that.
-3. Edit on the left, watch the live preview on the right, then **Save** (or Ctrl+S).
-4. Publish: commit & push this folder (e.g. GitHub Desktop → Commit → Push). GitHub Pages updates in a minute or two.
+1. Double-click **`edit-site.bat`**. A small window opens (the local editor server) and the editor opens
+   in your default browser — Firefox, Chrome, Edge, anything. Keep that window open while you edit.
+2. Edit on the left, watch the live preview on the right, then **Save** (or Ctrl+S).
+   Saves and uploads go straight into this folder; the server window lists each one.
+3. Publish: commit & push this folder (e.g. GitHub Desktop → Commit → Push). GitHub Pages updates in a minute or two.
+4. Close the server window when you're done.
+
+The server (`editor/server.py`, Python standard library only) only listens on your own computer, only accepts
+requests from the editor page, and only writes `js/content.js` and new files inside `assets/`.
 
 What you can do in the editor:
 
@@ -57,14 +60,14 @@ B.register({
 | `js/plugins.js` | Embed plugins (YouTube, blueprintUE, Sketchfab…) |
 | `js/main.js` | Renders the site from `content.js` |
 | `css/style.css` | Styling. Brand purples (`--accent`, `--accent-hover`, `--accent-deep`, `--accent-text`) are at the top |
-| `editor/` | The site editor |
+| `editor/` | The site editor (`server.py` is the local server that saves for it) |
 | `assets/` | Images, videos and files you upload |
 | `edit-site.bat` | Starts the editor |
 
 ## Preview without the editor
 
 ```bash
-python -m http.server 8080
+python editor/server.py
 ```
 
-Then open http://localhost:8080.
+It opens the editor; the site itself is at http://127.0.0.1:8080/.

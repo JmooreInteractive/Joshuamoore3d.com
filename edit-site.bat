@@ -1,7 +1,17 @@
 @echo off
-rem Opens the site editor. Keep the small server window open while editing; close it when done.
+rem Starts the site editor: a small local server that shows your site and saves the editor's changes.
+rem Works in any browser. Keep this window open while you edit; close it when you're done.
 cd /d "%~dp0"
-where python >/dev/null 2>/dev/null || (echo Python is needed to run the editor: https://www.python.org/downloads/ & pause & exit /b 1)
-start "Website editor server (close when done)" /min python -m http.server 8080
-timeout /t 2 /nobreak >nul
-start "" "http://localhost:8080/editor/"
+title Website editor - close this window when you're done
+
+set "PY="
+where python >nul 2>nul && set "PY=python"
+if not defined PY where py >nul 2>nul && set "PY=py"
+if not defined PY (
+  echo Python is needed to run the editor: https://www.python.org/downloads/
+  pause
+  exit /b 1
+)
+
+%PY% editor\server.py
+pause

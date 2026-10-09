@@ -4,8 +4,9 @@
     {
       "name": "site",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "8080"],
-      "port": 8080
+      "runtimeArgs": ["editor/server.py", "--port", "8080", "--no-browser"],
+      "port": 8080,
+      "url": "http://127.0.0.1:8080"
     }
   ]
 }

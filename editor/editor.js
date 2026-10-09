@@ -1,8 +1,10 @@
 /*
  * Site editor — edits js/content.js and adds media under assets/.
  *
- * How it saves: the browser's File System Access API (Chrome / Edge). You connect your website
- * folder once; the editor remembers it. Other browsers can still edit and download content.js.
+ * How it saves (first one available wins):
+ *   1. editor/server.py — the local server started by edit-site.bat. Works in any browser.
+ *   2. File System Access API (Chrome / Edge) — connect the website folder once; it's remembered.
+ *   3. Neither — you can still edit and download content.js.
  * Block types and embed plugins come from js/blocks.js and js/plugins.js — add a plugin there
  * and it shows up in the "Add block" menu automatically.
  */
@@ -18,6 +20,7 @@
     "// or by hand — everything after `window.PORTFOLIO =` must stay valid JSON.\n";
 
   let data = null;          // working copy of window.PORTFOLIO
+  let server = null;        // { folder } when running under editor/server.py
   let dir = null;           // connected website folder (FileSystemDirectoryHandle)
   let savedHandle = null;   // remembered folder that still needs permission
   let dirty = false;
@@ -186,20 +189,43 @@
     return (slug(m[1]) || "file") + ((m[2] || EXT[type] || "").toLowerCase());
   }
 
+  // Calls editor/server.py. The custom header lets the server reject requests from other websites.
+  async function api(endpoint, body, type) {
+    const res = await fetch("../api/" + endpoint, {
+      method: body === undefined ? "GET" : "POST",
+      headers: Object.assign({ "X-Site-Editor": "1" }, type ? { "Content-Type": type } : {}),
+      body,
+      cache: "no-store",
+    });
+    let json = {};
+    try {
+      json = await res.json();
+    } catch {}
+    if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`);
+    return json;
+  }
+
   // Writes a file into assets/<folder>/ (never overwrites) and returns its site-relative path.
   async function storeFile(blob, name, folder) {
-    const file = cleanName(name, blob.type);
-    const dot = file.lastIndexOf(".");
-    const base = dot > 0 ? file.slice(0, dot) : file;
-    const ext = dot > 0 ? file.slice(dot) : "";
-    let path = `assets/${folder}/${file}`;
-    for (let n = 2; await exists(path); n++) path = `assets/${folder}/${base}-${n}${ext}`;
-    await writeFile(path, blob);
+    let path;
+    if (server) {
+      path = (await api(`upload?folder=${encodeURIComponent(folder)}&name=${encodeURIComponent(name)}`, blob, blob.type || "application/octet-stream")).path;
+    } else {
+      const file = cleanName(name, blob.type);
+      const dot = file.lastIndexOf(".");
+      const base = dot > 0 ? file.slice(0, dot) : file;
+      const ext = dot > 0 ? file.slice(dot) : "";
+      path = `assets/${folder}/${file}`;
+      for (let n = 2; await exists(path); n++) path = `assets/${folder}/${base}-${n}${ext}`;
+      await writeFile(path, blob);
+    }
     assetMap[path] = URL.createObjectURL(blob);
     return path;
   }
 
   async function importRemote(url, folder) {
+    // The local server downloads it itself, so sites that block browser downloads still work.
+    if (server) return (await api("import", JSON.stringify({ url, folder }), "application/json")).path;
     const res = await fetch(url);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const blob = await res.blob();
@@ -208,17 +234,19 @@
   }
 
   function needFolder() {
-    if (dir) return true;
+    if (server || dir) return true;
     toast(
-      FS_OK ? "Connect your website folder first (top left) so files can be saved into it." : "Uploading files needs Chrome or Edge.",
+      FS_OK
+        ? "Open the editor with edit-site.bat (or connect your website folder, top left) so files can be saved."
+        : "Open the editor with edit-site.bat so files can be saved into your website folder.",
       "warn",
-      5000
+      6000
     );
     return false;
   }
 
   async function chooseFolder() {
-    if (!FS_OK) return toast("Saving straight to your folder needs Chrome or Edge.", "warn", 6000);
+    if (!FS_OK) return toast("This browser can't pick folders — open the editor with edit-site.bat instead.", "warn", 6000);
     let handle;
     try {
       handle = await window.showDirectoryPicker({ id: "website", mode: "readwrite" });
@@ -266,9 +294,10 @@
     const problems = validate();
     if (problems.length) return alert("Can't save yet:\n\n• " + problems.join("\n• "));
     const text = serialize(data);
-    if (!dir) return download(text);
+    if (!server && !dir) return download(text);
     try {
-      await writeFile(CONTENT_FILE, text);
+      if (server) await api("save-content", text, "text/plain;charset=utf-8");
+      else await writeFile(CONTENT_FILE, text);
       dirty = false;
       renderSaveState();
       toast("Saved! Commit & push your website folder to publish it.", "ok", 5000);
@@ -296,7 +325,7 @@
   function renderSaveState() {
     const btn = $("#save");
     btn.disabled = !dirty;
-    btn.textContent = !dirty ? "All changes saved" : dir ? "Save changes" : "Download changes";
+    btn.textContent = !dirty ? "All changes saved" : server || dir ? "Save changes" : "Download changes";
     btn.title = dirty ? "Ctrl+S" : "";
     document.title = (dirty ? "● " : "") + "Site Editor";
   }
@@ -1276,9 +1305,11 @@
 
   function renderFolder() {
     const box = $("#folder");
-    if (!FS_OK) {
-      fill(box, 
-        h("p", { class: "folder__msg is-warn" }, "This browser can't save into your folder. Open the editor in Chrome or Edge — or edit here and download the file."),
+    if (server) {
+      fill(box, h("p", { class: "folder__msg is-ok" }, "Saving to ", h("strong", {}, server.folder)), h("p", { class: "folder__msg" }, "Keep the editor window from edit-site.bat open while you work."));
+    } else if (!FS_OK) {
+      fill(box,
+        h("p", { class: "folder__msg is-warn" }, "Not connected. To save and upload, close this tab and double-click edit-site.bat in your website folder."),
         h("button", { type: "button", class: "btn btn--small", onclick: () => data && download(serialize(data)) }, "Download content.js")
       );
     } else if (dir) {
@@ -1290,7 +1321,7 @@
       );
     } else {
       fill(box, 
-        h("p", { class: "folder__msg is-warn" }, "Connect your website folder to save changes and upload images."),
+        h("p", { class: "folder__msg is-warn" }, "Not connected. Double-click edit-site.bat in your website folder — or connect the folder here."),
         h("button", { type: "button", class: "btn btn--small btn--primary", onclick: chooseFolder }, "Connect website folder")
       );
     }
@@ -1413,7 +1444,12 @@
       fill($("#main"), h("div", { class: "card" }, h("h2", { class: "card__title" }, "Couldn't load js/content.js"), h("p", { class: "muted" }, e.message)));
       return;
     }
-    if (FS_OK) {
+    try {
+      server = await api("status"); // only answers when started from edit-site.bat
+    } catch {
+      server = null;
+    }
+    if (!server && FS_OK) {
       savedHandle = await recall();
       try {
         if (savedHandle && (await savedHandle.queryPermission({ mode: "readwrite" })) === "granted") {
