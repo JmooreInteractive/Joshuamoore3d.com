@@ -8,7 +8,7 @@ Plain HTML/CSS/JS — no build step. Hosted on GitHub Pages.
 | File | What it is |
 | --- | --- |
 | `index.html` | Page layout: hero, portfolio, about, contact |
-| `css/style.css` | All styling. Change `--accent` at the top to re-theme the site |
+| `css/style.css` | All styling. Brand purples (`--accent`, `--accent-hover`, `--accent-deep`, `--accent-text`) are at the top |
 | `js/projects.js` | **All portfolio content.** Add/edit projects and categories here |
 | `js/main.js` | Renders the category tabs, project tiles, and project breakdown pages (`#work/<id>`) |
 
