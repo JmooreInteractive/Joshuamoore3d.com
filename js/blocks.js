@@ -88,6 +88,63 @@
       return `<figure class="media ${cls || ""}">${inner}${Blocks.caption(caption)}</figure>`;
     },
 
+    // Reads any YouTube or Vimeo link — watch/share/Shorts/Studio/embed links, unlisted Vimeo links,
+    // or pasted <iframe> code — and returns { provider, id, src, page } or null.
+    // `bare` says how to read a bare ID: "youtube" (11 chars) or "vimeo" (digits).
+    video(input, bare) {
+      let v = String(input || "").trim();
+      const iframe = v.match(/<iframe[^>]*\ssrc=["']?([^"'\s>]+)/i);
+      if (iframe) v = iframe[1].replace(/&amp;/g, "&");
+
+      const yt =
+        v.match(/(?:youtube(?:-nocookie)?\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/|v\/|video\/)|youtu\.be\/)([\w-]{11})/i) ||
+        (bare === "youtube" && v.match(/^([\w-]{11})$/));
+      if (yt) {
+        let start = 0;
+        const t = v.match(/[?&#](?:t|start)=([\dhms]+)/i);
+        if (t) for (const part of t[1].match(/\d+[hms]?/gi) || []) start += parseInt(part, 10) * ({ h: 3600, m: 60 }[part.slice(-1).toLowerCase()] || 1);
+        return {
+          provider: "youtube",
+          id: yt[1],
+          src: `https://www.youtube-nocookie.com/embed/${yt[1]}?rel=0${start ? `&start=${start}` : ""}`,
+          page: `https://www.youtube.com/watch?v=${yt[1]}`,
+        };
+      }
+
+      let id = "";
+      let hash = "";
+      if (/vimeo\.com/i.test(v)) {
+        try {
+          const u = new URL(/^https?:/i.test(v) ? v : "https://" + v);
+          const segs = u.pathname.split("/").filter(Boolean);
+          const at = segs.map((s) => /^\d{6,}$/.test(s)).lastIndexOf(true);
+          if (at >= 0) {
+            id = segs[at];
+            hash = u.searchParams.get("h") || (/^[0-9a-f]{6,}$/i.test(segs[at + 1] || "") ? segs[at + 1] : "");
+          }
+        } catch {}
+      } else if (bare === "vimeo" && /^\d{6,}$/.test(v)) {
+        id = v;
+      }
+      if (id) {
+        return {
+          provider: "vimeo",
+          id,
+          src: `https://player.vimeo.com/video/${id}${hash ? `?h=${hash}` : ""}`,
+          page: `https://vimeo.com/${id}${hash ? "/" + hash : ""}`,
+        };
+      }
+      return null;
+    },
+
+    videoFrame(info, caption) {
+      return Blocks.frame(info.src, {
+        title: caption || (info.provider === "vimeo" ? "Vimeo video" : "YouTube video"),
+        allow: "accelerometer; autoplay; clipboard-write; encrypted-media; fullscreen; gyroscope; picture-in-picture",
+        caption,
+      });
+    },
+
     // Responsive iframe. Pass `height` (px) for a fixed height, otherwise `aspect` is used.
     frame(src, opts) {
       const o = opts || {};
@@ -187,10 +244,12 @@
       { key: "alt", label: "Description (for screen readers)", type: "text", placeholder: "What's in the image?" },
       captionField,
     ],
-    render: (b) =>
-      b.src
-        ? B.figure(`<img src="${esc(B.asset(b.src))}" alt="${esc(b.alt)}" loading="lazy" decoding="async">`, b.caption)
-        : B.placeholder("Choose an image"),
+    render: (b) => {
+      if (!b.src) return B.placeholder("Choose an image");
+      const video = B.video(b.src); // a YouTube/Vimeo link pasted here still plays
+      if (video) return B.videoFrame(video, b.caption);
+      return B.figure(`<img src="${esc(B.asset(b.src))}" alt="${esc(b.alt)}" loading="lazy" decoding="async">`, b.caption);
+    },
   });
 
   B.register({
@@ -219,12 +278,14 @@
     group: "Media",
     icon: "MP4",
     fields: [
-      { key: "src", label: "Video file", type: "file", accept: "video/mp4,video/webm", help: "Short clips work best — GitHub rejects files over 100 MB. Use YouTube/Vimeo for long videos." },
+      { key: "src", label: "Video file", type: "file", accept: "video/mp4,video/webm", help: "Upload an MP4 — short clips work best (GitHub rejects files over 100 MB). A YouTube or Vimeo link also works here." },
       { key: "loop", label: "Play like a GIF (muted, looping, autoplay)", type: "checkbox", default: true },
       captionField,
     ],
     render: (b) => {
       if (!b.src) return B.placeholder("Choose a video file");
+      const video = B.video(b.src);
+      if (video) return B.videoFrame(video, b.caption);
       const mode = b.loop ? "autoplay muted loop playsinline" : "controls";
       return B.figure(`<video src="${esc(B.asset(b.src))}" ${mode} preload="metadata"></video>`, b.caption);
     },

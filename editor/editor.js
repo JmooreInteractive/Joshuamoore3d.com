@@ -511,7 +511,9 @@
       copyBtn.hidden = !isRemote(v);
       clearBtn.hidden = !v;
       fill(thumb);
+      const video = B.video(v);
       if (!v) thumb.append(h("span", {}, isImage ? "No image" : "No file"));
+      else if (video) thumb.append(h("span", {}, `▶ ${NAMES[video.provider]} video`));
       else if (isImage) thumb.append(h("img", { src: srcFor(v), alt: "" }));
       else if (/\.(mp4|webm)$/i.test(v)) thumb.append(h("video", { src: srcFor(v), muted: true, loop: true, autoplay: true, playsinline: true }));
       else thumb.append(h("span", {}, (/\.pdf$/i.test(v) ? "PDF · " : "") + v.split("/").pop()));
@@ -716,6 +718,128 @@
     return root;
   }
 
+  // ================================================================ drag to reorder
+  // Pointer-based (not HTML5 drag & drop) so it behaves the same in Firefox, Chrome and Edge,
+  // works on buttons, and works with touch on the ⠿ grips. Call from a pointerdown handler:
+  //   items()   the list's elements in order (one per array entry)
+  //   range     [from, to) — the entries being moved (a section can be several)
+  //   targets   insertion indexes that are allowed (0 … items.length)
+  //   gap       px between items, to centre the drop line
+  //   scroller  element to auto-scroll when dragging near its edges
+  //   label     text shown next to the pointer
+  //   onDrop(t) called with the chosen insertion index
+  let suppressClick = false;
+  window.addEventListener("click", (e) => {
+    if (!suppressClick) return;
+    suppressClick = false;
+    e.preventDefault();
+    e.stopPropagation();
+  }, true);
+
+  function startDrag(e, opts) {
+    if (e.button !== 0) return;
+    const handle = e.currentTarget;
+    const items = opts.items();
+    const [from, to] = opts.range;
+    const moving = items.slice(from, to);
+    const startY = e.clientY;
+    let lastX = e.clientX;
+    let lastY = e.clientY;
+    let dragging = false;
+    let target = null;
+    let raf = 0;
+    let ghost = null;
+    let line = null;
+    try {
+      handle.setPointerCapture(e.pointerId);
+    } catch {}
+
+    const yOf = (t) =>
+      t < items.length ? items[t].getBoundingClientRect().top - opts.gap / 2 : items[items.length - 1].getBoundingClientRect().bottom + opts.gap / 2;
+
+    function begin() {
+      dragging = true;
+      document.body.classList.add("is-sorting");
+      moving.forEach((el) => el.classList.add("is-dragging"));
+      ghost = h("div", { class: "drag-ghost" }, opts.label);
+      line = h("div", { class: "drop-line", hidden: true });
+      document.body.append(ghost, line);
+      tick();
+    }
+
+    // Runs every frame while dragging: auto-scroll near the edges of the scrolling area.
+    function tick() {
+      const sr = opts.scroller.getBoundingClientRect();
+      if (lastY < sr.top + 60) opts.scroller.scrollTop -= Math.ceil((sr.top + 60 - lastY) / 3);
+      else if (lastY > sr.bottom - 60) opts.scroller.scrollTop += Math.ceil((lastY - sr.bottom + 60) / 3);
+      update();
+      raf = requestAnimationFrame(tick);
+    }
+
+    // Picks the drop spot and moves the line + label. Also runs on every pointer move.
+    function update() {
+      // closest allowed gap to the pointer; dropping back into its own spot is "no move"
+      target = null;
+      let best = Infinity;
+      for (const t of opts.targets) {
+        const d = Math.abs(yOf(t) - lastY);
+        if (d < best) {
+          best = d;
+          target = t;
+        }
+      }
+      if (target !== null && target >= from && target <= to) target = null;
+
+      if (target === null) line.hidden = true;
+      else {
+        const box = items[0].parentElement.getBoundingClientRect();
+        line.hidden = false;
+        line.style.top = yOf(target) - 1.5 + "px";
+        line.style.left = box.left + "px";
+        line.style.width = box.width + "px";
+      }
+      ghost.style.left = lastX + 14 + "px";
+      ghost.style.top = lastY + 12 + "px";
+    }
+
+    function finish(commit) {
+      handle.removeEventListener("pointermove", onMove);
+      handle.removeEventListener("pointerup", onUp);
+      handle.removeEventListener("pointercancel", onCancel);
+      document.removeEventListener("keydown", onKey, true);
+      if (!dragging) return;
+      cancelAnimationFrame(raf);
+      document.body.classList.remove("is-sorting");
+      moving.forEach((el) => el.classList.remove("is-dragging"));
+      ghost.remove();
+      line.remove();
+      suppressClick = true; // the pointerup would otherwise "click" the item we dragged
+      setTimeout(() => (suppressClick = false), 0);
+      if (commit && target !== null) opts.onDrop(target);
+    }
+
+    const onMove = (ev) => {
+      lastX = ev.clientX;
+      lastY = ev.clientY;
+      if (!dragging && Math.abs(lastY - startY) > 5) begin();
+      else if (dragging) update();
+    };
+    const onUp = () => finish(true);
+    const onCancel = () => finish(false);
+    const onKey = (ev) => ev.key === "Escape" && finish(false);
+    handle.addEventListener("pointermove", onMove);
+    handle.addEventListener("pointerup", onUp);
+    handle.addEventListener("pointercancel", onCancel);
+    document.addEventListener("keydown", onKey, true);
+  }
+
+  // Moves arr[from..to) so it is inserted before index t (t is in pre-move positions).
+  function moveRange(arr, from, to, t) {
+    const moved = arr.splice(from, to - from);
+    arr.splice(t > from ? t - moved.length : t, 0, ...moved);
+    return moved;
+  }
+
   // ================================================================ block clipboard
   // Copied blocks can be pasted into any project or home section. Kept in localStorage so the
   // clipboard survives reloads. Media paths are copied as-is — the files stay where they are.
@@ -866,11 +990,49 @@
     const pickAt = (i) => (e) => openPicker(e.currentTarget, (t) => insertAt(i, t), () => pasteAt(i));
     const inserter = (i) => h("div", { class: "inserter" }, h("button", { type: "button", title: "Insert or paste a block here", onclick: pickAt(i) }, "+"));
 
+    // Drag a block by its ⠿ grip. A heading brings its whole section and only lands between sections.
+    function dragBlock(e, i) {
+      const isSection = blocks[i].type === "heading";
+      const end = isSection ? sectionEnd(blocks, i) : i + 1;
+      const targets = [];
+      for (let t = 0; t <= blocks.length; t++) {
+        if (!isSection || t === 0 || t === blocks.length || blocks[t].type === "heading") targets.push(t);
+      }
+      startDrag(e, {
+        items: () => cards,
+        range: [i, end],
+        targets,
+        gap: 14,
+        scroller: $("#main"),
+        label: isSection ? `“${blocks[i].text || "Untitled"}” section · ${plural(end - i, "block")}` : (B.types[blocks[i].type] || { label: "Block" }).label,
+        onDrop: (t) => {
+          pasted = new Set(moveRange(blocks, i, end, t)); // flash the moved blocks
+          rerender();
+          changed();
+        },
+      });
+    }
+
     function toolbar() {
+      const allCollapsed = blocks.length > 0 && blocks.every((b) => collapsed.has(b));
       return h(
         "div",
         { class: "clipbar" },
         h("button", { type: "button", class: "btn btn--small", disabled: !blocks.length, onclick: () => copy(blocks, `all ${plural(blocks.length, "block")}`) }, "Copy all blocks"),
+        h(
+          "button",
+          {
+            type: "button",
+            class: "btn btn--small",
+            disabled: !blocks.length,
+            title: "Collapsed blocks make a compact outline that's easy to drag around",
+            onclick: () => {
+              blocks.forEach((b) => (allCollapsed ? collapsed.delete(b) : collapsed.add(b)));
+              rerender();
+            },
+          },
+          allCollapsed ? "Expand all" : "Collapse all"
+        ),
         clip
           ? h(
               "div",
@@ -882,7 +1044,7 @@
                 rerender();
               })
             )
-          : h("span", { class: "clipbar__hint" }, "Tip: “Copy section” on a heading copies it plus everything under it.")
+          : h("span", { class: "clipbar__hint" }, "Drag ⠿ to reorder — dragging a heading moves its whole section.")
       );
     }
 
@@ -938,12 +1100,23 @@
           class: "block__head",
           title: isCollapsed ? "Click to expand" : "Click to collapse",
           onclick: (e) => {
-            if (e.target.closest("button")) return;
+            if (e.target.closest("button, .grip")) return;
             if (collapsed.has(b)) collapsed.delete(b);
             else collapsed.add(b);
             rerender();
           },
         },
+        h(
+          "span",
+          {
+            class: "grip",
+            title: isHeading ? "Drag to move this whole section" : "Drag to move this block",
+            onpointerdown: (e) => dragBlock(e, i),
+            onmouseenter: () => isHeading && markSection(i, true),
+            onmouseleave: () => isHeading && markSection(i, false),
+          },
+          "⠿"
+        ),
         h("span", { class: "block__icon" }, def ? def.icon : "?"),
         h("span", { class: "block__label" }, def ? def.label : `Unknown block “${b.type}”`),
         summary,
@@ -998,14 +1171,65 @@
     return root;
   }
 
+  // Asks YouTube (through editor/server.py) whether a video may be embedded. Cached per video.
+  const ytChecks = new Map();
+  function checkYouTube(id) {
+    if (!server) return Promise.resolve({ status: 0 });
+    if (!ytChecks.has(id)) ytChecks.set(id, api(`oembed?id=${encodeURIComponent(id)}`).catch(() => ({ status: 0 })));
+    return ytChecks.get(id);
+  }
+
+  const NAMES = { youtube: "YouTube", vimeo: "Vimeo" };
+
+  // Under link fields: says when a YouTube/Vimeo link was recognized and whether it will play.
+  function videoNote(b, key) {
+    const note = h("small", { class: "field__note" });
+    let timer = 0;
+    let current = "";
+    const set = (text, kind) => {
+      note.textContent = text;
+      note.className = "field__note" + (kind ? ` is-${kind}` : "");
+    };
+    function update() {
+      clearTimeout(timer);
+      const value = String(b[key] || "").trim();
+      const video = B.video(value, b.type === "youtube" || b.type === "vimeo" ? b.type : undefined);
+      current = value;
+      if (!video) return set("");
+      const switched = b.type !== video.provider ? `That's a ${NAMES[video.provider]} link — it'll show as a ${NAMES[video.provider]} player. ` : "";
+      if (video.provider === "vimeo") {
+        return set(switched + "If the player says the video can't be played here: on Vimeo open the video → Settings → Privacy → Embed, and choose “Anywhere”.");
+      }
+      if (!server) return set(switched);
+      set(switched + "Checking with YouTube…");
+      timer = setTimeout(async () => {
+        const res = await checkYouTube(video.id);
+        if (current !== value) return; // the link changed while we were checking
+        if (res.status === 200) set(`${switched}✓ YouTube says this video can be embedded${res.title ? `: “${res.title}”` : ""}.`, "ok");
+        else if (res.status === 401 || res.status === 403)
+          set(
+            "✕ YouTube won't play this video on other sites. In YouTube Studio open the video → Details: set Visibility to Public or Unlisted (not Private), and under “Show more” turn on “Allow embedding”.",
+            "bad"
+          );
+        else if (res.status === 400 || res.status === 404) set("✕ YouTube can't find this video. Check the link — the video may be private or deleted.", "bad");
+        else set(switched);
+      }, 500);
+    }
+    update();
+    return { el: note, update };
+  }
+
   function blockField(b, f, def, folder, onAny) {
     const warn = h("small", { class: "field__warn" });
+    const linkLike = ["url", "file", "image"].includes(f.type);
+    const vnote = linkLike ? videoNote(b, f.key) : null;
     const check = () => {
       if (def.parse && f.key === "url") warn.textContent = b.url && !def.parse(b) ? "Couldn't recognize this link — make sure you copied the full address." : "";
     };
     const onInput = () => {
       onAny();
       check();
+      if (vnote) vnote.update();
     };
     const videoFolder = () => folder().replace(/^img\//, "video/");
     let control;
@@ -1040,7 +1264,7 @@
         control = input(b, f.key, { type: f.type === "url" ? "url" : "text", placeholder: f.placeholder, onInput });
     }
     check();
-    return field(f.label, control, f.help, warn);
+    return field(f.label, control, f.help, h("span", {}, warn, vnote && vnote.el));
   }
 
   // ================================================================ views
@@ -1462,7 +1686,7 @@
     const item = (label, active, onclick, opts = {}) =>
       h(
         "button",
-        { type: "button", class: "nav-item" + (active ? " is-active" : ""), onclick },
+        { type: "button", class: "nav-item" + (active ? " is-active" : "") + (opts.drag ? " is-draggable" : ""), onclick, onpointerdown: opts.drag },
         opts.thumb !== undefined
           ? opts.thumb
             ? h("img", { class: "nav-item__thumb", src: srcFor(opts.thumb), alt: "" })
@@ -1481,17 +1705,45 @@
     const group = (label, onAdd, addTitle) =>
       h("div", { class: "nav-group" }, h("span", {}, label), onAdd ? h("button", { type: "button", title: addTitle, onclick: onAdd }, "+ New") : null);
 
-    fill($("#nav"), 
+    // Press and drag a project or section to reorder it.
+    const dragIn = (arr, els, i, label) => (e) => {
+      if (e.target.closest(".nav-item__move")) return;
+      startDrag(e, {
+        items: () => els,
+        range: [i, i + 1],
+        targets: arr.map((_, t) => t).concat(arr.length),
+        gap: 2,
+        scroller: $("#nav"),
+        label,
+        onDrop: (t) => {
+          moveRange(arr, i, i + 1, t);
+          changed({ nav: true });
+        },
+      });
+    };
+    const sectionEls = [];
+    const projectEls = [];
+
+    fill($("#nav"),
       group("Website"),
       item("Home, About & Contact", view.kind === "site", () => go({ kind: "site" })),
       item("Portfolio categories", view.kind === "categories", () => go({ kind: "categories" })),
       group("Extra sections", addSection, "Add a section to the home page"),
       data.sections.length
-        ? data.sections.map((s, i) => item(s.title || "Untitled section", view.ref === s, () => go({ kind: "section", ref: s }), { move: (d) => move(data.sections, i, d) }))
+        ? data.sections.map((s, i) =>
+            (sectionEls[i] = item(s.title || "Untitled section", view.ref === s, () => go({ kind: "section", ref: s }), {
+              move: (d) => move(data.sections, i, d),
+              drag: dragIn(data.sections, sectionEls, i, s.title || "Untitled section"),
+            }))
+          )
         : h("p", { class: "nav-empty" }, "e.g. Experience, Awards, Talks"),
       group("Projects", newProject, "Add a project"),
       data.projects.map((p, i) =>
-        item(p.title || "Untitled project", view.ref === p, () => go({ kind: "project", ref: p }), { thumb: p.thumb || "", move: (d) => move(data.projects, i, d) })
+        (projectEls[i] = item(p.title || "Untitled project", view.ref === p, () => go({ kind: "project", ref: p }), {
+          thumb: p.thumb || "",
+          move: (d) => move(data.projects, i, d),
+          drag: dragIn(data.projects, projectEls, i, p.title || "Untitled project"),
+        }))
       )
     );
   }
@@ -1557,14 +1809,14 @@
     previewReady = false;
     frame.contentWindow.location.reload();
   });
-  $("#preview-hide").addEventListener("click", () => {
-    $("#app").classList.add("no-preview");
-    $("#preview-show").hidden = false;
-  });
-  $("#preview-show").addEventListener("click", () => {
-    $("#app").classList.remove("no-preview");
-    $("#preview-show").hidden = true;
-  });
+  function showPreview(open) {
+    $("#app").classList.toggle("no-preview", !open);
+    $("#preview-show").hidden = open;
+  }
+  $("#preview-hide").addEventListener("click", () => showPreview(false));
+  $("#preview-show").addEventListener("click", () => showPreview(true));
+  // In narrow windows the preview covers the form, so it starts closed there.
+  showPreview(!matchMedia("(max-width: 1100px)").matches);
 
   async function init() {
     try {

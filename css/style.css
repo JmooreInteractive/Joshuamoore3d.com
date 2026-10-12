@@ -333,7 +333,9 @@ button { font: inherit; color: inherit; }
 /* ----------------------------------------------------- content blocks (prose) */
 
 .prose { max-width: 860px; }
-.prose > :first-child { margin-top: 0; }
+.block-wrap { display: contents; } /* one per content block; lets the page update blocks individually */
+.prose > :first-child,
+.prose > .block-wrap:first-child > :first-child { margin-top: 0; }
 .prose h3 {
   margin: 40px 0 10px;
   font-size: 22px; font-weight: 700;

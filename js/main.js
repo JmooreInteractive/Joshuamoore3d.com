@@ -61,18 +61,24 @@
       )
       .join("");
 
-    $("custom-sections").innerHTML = data.sections
-      .map(
-        (sec) => `
-        <section class="custom-section" id="${esc(sec.id)}">
-          <div class="section-head">
-            ${sec.eyebrow ? `<p class="eyebrow">${esc(sec.eyebrow)}</p>` : ""}
-            <h2 class="section-title">${esc(sec.title)}</h2>
-          </div>
-          <div class="prose">${Blocks.renderAll(sec.blocks)}</div>
-        </section>`
-      )
-      .join("");
+    // Extra sections: keep each section element (and its videos) alive across editor updates.
+    const wrap = $("custom-sections");
+    const existing = new Map([...wrap.children].map((el) => [el.id, el]));
+    const nodes = data.sections.map((sec) => {
+      let el = existing.get(sec.id);
+      if (!el) {
+        el = document.createElement("section");
+        el.className = "custom-section";
+        el.id = sec.id;
+        el.innerHTML = `<div class="section-head"></div><div class="prose"></div>`;
+      }
+      el.querySelector(".section-head").innerHTML =
+        (sec.eyebrow ? `<p class="eyebrow">${esc(sec.eyebrow)}</p>` : "") + `<h2 class="section-title">${esc(sec.title)}</h2>`;
+      patchBlocks(el.querySelector(".prose"), sec.blocks);
+      return el;
+    });
+    nodes.forEach((el, i) => wrap.children[i] !== el && wrap.insertBefore(el, wrap.children[i] || null));
+    [...wrap.children].slice(nodes.length).forEach((el) => el.remove());
 
     $("contact-pitch").innerHTML = inline(contact.pitch);
     const email = $("contact-email");
@@ -192,6 +198,23 @@
 
   // -------------------------------------------------------------- detail
 
+  // Updates a list of content blocks in place, replacing only blocks whose HTML changed — so an
+  // embedded video doesn't reload while you edit some other block in the site editor.
+  function patchBlocks(container, blocks) {
+    const html = (blocks || []).map(Blocks.render);
+    const old = [...container.children];
+    html.forEach((markup, i) => {
+      if (old[i] && old[i]._html === markup) return;
+      const el = document.createElement("div");
+      el.className = "block-wrap";
+      el.innerHTML = markup;
+      el._html = markup;
+      if (old[i]) old[i].replaceWith(el);
+      else container.append(el);
+    });
+    old.slice(html.length).forEach((el) => el.remove());
+  }
+
   function renderDetail(p) {
     const list = inCat(activeCat);
     const i = list.findIndex((x) => x.id === p.id);
@@ -200,7 +223,12 @@
     const meta = (p.meta || []).filter((m) => m.label || m.value);
     const links = (p.links || []).filter((l) => l.url);
 
-    detailEl.innerHTML = `
+    if (detailEl.dataset.project !== p.id) {
+      detailEl.innerHTML = `<div class="detail__top"></div><div class="detail__body prose"></div><div class="detail__end"></div>`;
+      detailEl.dataset.project = p.id;
+    }
+
+    detailEl.querySelector(".detail__top").innerHTML = `
       <div class="detail__bar">
         <a class="btn" href="#portfolio">← Back</a>
       </div>
@@ -222,10 +250,11 @@
               .map((l, j) => `<a class="btn ${j === 0 ? "btn--accent" : ""}" href="${esc(asset(l.url))}" target="_blank" rel="noopener">${esc(l.label || l.url)} ↗</a>`)
               .join("")}</div>`
           : ""
-      }
+      }`;
 
-      <div class="detail__body prose">${Blocks.renderAll(p.body)}</div>
+    patchBlocks(detailEl.querySelector(".detail__body"), p.body);
 
+    detailEl.querySelector(".detail__end").innerHTML = `
       ${
         list.length > 1 && i !== -1
           ? `<nav class="detail__pager" aria-label="More projects">
@@ -239,6 +268,7 @@
   function showGrid() {
     detailEl.hidden = true;
     detailEl.innerHTML = ""; // stops any playing video
+    delete detailEl.dataset.project;
     gridEl.hidden = false;
   }
 

@@ -176,6 +176,11 @@ window.PORTFOLIO = {
           ]
         },
         {
+          "type": "vimeo",
+          "url": "https://vimeo.com/manage/videos/1234447395",
+          "caption": "Snow globe capture demonstration"
+        },
+        {
           "type": "heading",
           "text": "Performance Notes"
         },
@@ -193,7 +198,7 @@ window.PORTFOLIO = {
       "id": "cat-fish",
       "title": "Cat-Fish!",
       "term": "",
-      "status": "",
+      "status": "In Development",
       "award": "",
       "categories": [
         "featured",
@@ -220,6 +225,37 @@ window.PORTFOLIO = {
       ],
       "links": [],
       "body": [
+        {
+          "type": "heading",
+          "text": "My Responsibilities"
+        },
+        {
+          "type": "text",
+          "text": "Catfish! is an online multiplayer game where players work together to **catch**, **cut**, and **sell** fish to the local townspeople."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Authored water material",
+            "Developed custom-buoyancy system based on water shader",
+            "Held logic in actor component so for a modular system",
+            "Developed all functionality for fishing minigame"
+          ]
+        },
+        {
+          "type": "image",
+          "src": "assets/img/cat-fish/fishingdemo-ezgif-com-optimize.gif",
+          "alt": "Buoyancy demonstration",
+          "caption": "Demonstration of shader-based buoyancy"
+        },
+        {
+          "type": "heading",
+          "text": "Why Custom-Buoyancy?"
+        },
+        {
+          "type": "text",
+          "text": "Unreal's default buoyancy system within the water plugin is over bloated for the type of game our team is developing. We needed a system that was easy to use, adjustable, and worked well with stylized materials."
+        },
         {
           "type": "image",
           "src": "https://static.wixstatic.com/media/34fe06_e04e2d9427bf4cce8f73ba2bc26d052e~mv2.webp/v1/fill/w_1280,h_720,al_c,q_85,usm_0.66_1.00_0.01/34fe06_e04e2d9427bf4cce8f73ba2bc26d052e~mv2.webp",

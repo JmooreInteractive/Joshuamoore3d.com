@@ -17,6 +17,7 @@ import os
 import re
 import sys
 import threading
+import urllib.error
 import urllib.parse
 import urllib.request
 import webbrowser
@@ -122,11 +123,37 @@ class Handler(http.server.SimpleHTTPRequestHandler):
     # ------------------------------------------------------------ routes
 
     def do_GET(self):
-        if urllib.parse.urlsplit(self.path).path == "/api/status":
+        url = urllib.parse.urlsplit(self.path)
+        if url.path == "/api/status":
             if self.from_editor():
                 self.reply(200, {"ok": True, "folder": os.path.basename(ROOT)})
             return
+        if url.path == "/api/oembed":
+            if self.from_editor():
+                self.reply(200, self.oembed(dict(urllib.parse.parse_qsl(url.query))))
+            return
         super().do_GET()
+
+    def oembed(self, query):
+        """Ask YouTube whether a video can be embedded: 200 = yes, 401/403 = private or embedding off,
+        400/404 = no such video. (Vimeo's equivalent isn't reliable -- it says "not found" for
+        "Hide from Vimeo" videos that embed fine -- so the editor doesn't check Vimeo.)"""
+        video_id = query.get("id", "")
+        if not re.fullmatch(r"[\w-]{11}", video_id):
+            return {"status": 0}
+        page = "https://www.youtube.com/watch?v=" + video_id
+        request = urllib.request.Request(
+            "https://www.youtube.com/oembed?format=json&url=" + urllib.parse.quote(page, safe=""),
+            headers={"User-Agent": "Mozilla/5.0 (site editor)"},
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=15) as res:
+                info = json.load(res)
+                return {"status": res.status, "title": info.get("title", ""), "author": info.get("author_name", "")}
+        except urllib.error.HTTPError as e:
+            return {"status": e.code}
+        except Exception:
+            return {"status": 0}  # offline etc. -- the editor just skips the check
 
     def do_POST(self):
         if not self.from_editor():

@@ -24,43 +24,31 @@
   const linkField = (label, placeholder, help) => ({ key: "url", label, type: "url", placeholder, help });
   const captionField = { key: "caption", label: "Caption", type: "text", placeholder: "Optional" };
 
-  // ------------------------------------------------------------ YouTube
+  // ------------------------------------------------------------ YouTube / Vimeo
+  // Both accept either site's links (B.video reads watch, share, Shorts, Studio, unlisted and embed links).
   B.register({
     type: "youtube",
     label: "YouTube video",
     group: "Embeds",
     icon: "YT",
-    fields: [linkField("YouTube link", "https://www.youtube.com/watch?v=…"), captionField],
-    parse: (b) =>
-      idFrom(b.url, [/(?:youtube(?:-nocookie)?\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([\w-]{11})/, /^([\w-]{11})$/]),
+    fields: [linkField("YouTube link", "https://www.youtube.com/watch?v=…  or  https://youtu.be/…", "Any YouTube link works — from the address bar, Share, or YouTube Studio."), captionField],
+    parse: (b) => B.video(b.url, "youtube"),
     render(b) {
-      const id = this.parse(b);
-      if (!id) return B.placeholder("Paste a YouTube link");
-      return B.frame(`https://www.youtube-nocookie.com/embed/${id}?rel=0`, {
-        title: b.caption || "YouTube video",
-        allow: "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture",
-        caption: b.caption,
-      });
+      const video = this.parse(b);
+      return video ? B.videoFrame(video, b.caption) : B.placeholder("Paste a YouTube link");
     },
   });
 
-  // ------------------------------------------------------------ Vimeo
   B.register({
     type: "vimeo",
     label: "Vimeo video",
     group: "Embeds",
     icon: "VM",
-    fields: [linkField("Vimeo link", "https://vimeo.com/123456789"), captionField],
-    parse: (b) => idFrom(b.url, [/vimeo\.com\/(?:.*\/)?(\d{6,}(?:\/[0-9a-f]+)?)/, /^(\d{6,})$/]),
+    fields: [linkField("Vimeo link", "https://vimeo.com/123456789", "Any Vimeo link works — including private “unlisted” links (vimeo.com/123…/abc…)."), captionField],
+    parse: (b) => B.video(b.url, "vimeo"),
     render(b) {
-      const id = this.parse(b);
-      if (!id) return B.placeholder("Paste a Vimeo link");
-      const [video, hash] = id.split("/"); // unlisted videos carry a privacy hash
-      return B.frame(`https://player.vimeo.com/video/${video}${hash ? `?h=${hash}` : ""}`, {
-        title: b.caption || "Vimeo video",
-        allow: "autoplay; fullscreen; picture-in-picture",
-        caption: b.caption,
-      });
+      const video = this.parse(b);
+      return video ? B.videoFrame(video, b.caption) : B.placeholder("Paste a Vimeo link");
     },
   });
 
@@ -142,6 +130,9 @@
     ],
     parse: (b) => idFrom(b.url, [/<iframe[^>]*\ssrc=["']?(https:\/\/[^"'\s>]+)/i, /^(https:\/\/\S+)$/i]),
     render(b) {
+      // YouTube/Vimeo page links can't be framed directly — turn them into their players.
+      const video = B.video(b.url);
+      if (video) return B.videoFrame(video, b.caption);
       const src = this.parse(b);
       if (!src) return B.placeholder("Paste an https:// embed link or iframe code");
       const fixed = b.size === "Fixed height";
