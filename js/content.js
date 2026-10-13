@@ -316,7 +316,6 @@ window.PORTFOLIO = {
       "status": "In Development",
       "award": "",
       "categories": [
-        "featured",
         "games"
       ],
       "summary": "Technical lead and gameplay programmer — shaders and gameplay systems in Unreal Engine.",
@@ -449,7 +448,6 @@ window.PORTFOLIO = {
       "status": "",
       "award": "Best in Show · Global Game Jam 2026 (Savannah)",
       "categories": [
-        "featured",
         "games",
         "shaders"
       ],
