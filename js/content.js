@@ -316,7 +316,8 @@ window.PORTFOLIO = {
       "status": "In Development",
       "award": "",
       "categories": [
-        "games"
+        "games",
+        "shaders"
       ],
       "summary": "Technical lead and gameplay programmer — shaders and gameplay systems in Unreal Engine.",
       "tags": [
@@ -389,8 +390,9 @@ window.PORTFOLIO = {
       "status": "",
       "award": "",
       "categories": [
-        "featured",
-        "shaders"
+        "shaders",
+        "tools",
+        "featured"
       ],
       "summary": "A drink still-life rendered with fully procedural materials — no external textures.",
       "tags": [
