@@ -113,6 +113,121 @@ window.PORTFOLIO = {
   ],
   "projects": [
     {
+      "id": "material-viewer",
+      "title": "Real-Time Material Viewer",
+      "term": "Winter 2026",
+      "status": "Work in progress",
+      "award": "",
+      "categories": [
+        "featured",
+        "tools"
+      ],
+      "summary": "A Maya plugin that previews scrolling-texture VFX materials on a mesh's UVs, cutting the back-and-forth with Unreal.",
+      "tags": [
+        "Python",
+        "Maya Tool",
+        "Shaders",
+        "VFX Workflow"
+      ],
+      "thumb": "https://static.wixstatic.com/media/34fe06_0c4ed1ad353842748e0b3cd552fa306e~mv2.png/v1/fill/w_720,h_405,al_c,q_85,usm_0.66_1.00_0.01/34fe06_0c4ed1ad353842748e0b3cd552fa306e~mv2.png",
+      "preview": "https://static.wixstatic.com/media/34fe06_efe909d146334888b8304593873fb901~mv2.gif",
+      "meta": [
+        {
+          "label": "Role",
+          "value": "Technical Artist"
+        },
+        {
+          "label": "Team",
+          "value": "1"
+        },
+        {
+          "label": "Duration",
+          "value": "5 weeks"
+        },
+        {
+          "label": "Tools",
+          "value": "Python 3 · Maya"
+        }
+      ],
+      "links": [
+        {
+          "label": "Documentation (PDF)",
+          "url": "https://f275549e-8536-4fe6-a52c-9d2f0ab77eaf.filesusr.com/ugd/34fe06_e42f374dfa114cac802f7283cc309667.pdf"
+        }
+      ],
+      "body": [
+        {
+          "type": "image",
+          "src": "https://static.wixstatic.com/media/34fe06_efe909d146334888b8304593873fb901~mv2.gif",
+          "alt": "Material viewer previewing a scrolling texture in Maya",
+          "caption": ""
+        },
+        {
+          "type": "heading",
+          "text": "Functionality"
+        },
+        {
+          "type": "text",
+          "text": "The Real-Time Material Viewer is a Maya tool designed to quickly set up a preview of how textures interact with a model's UVs in real-time environments such as Unreal Engine. This helps minimize the back-and-forth between programs during iteration."
+        },
+        {
+          "type": "text",
+          "text": "The tool enables artists to:"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Create a reusable display material",
+            "Apply the display material to test geometry or selected meshes",
+            "Select the texture to be displayed",
+            "Choose and apply UV sets",
+            "Quickly test UV tiling, translation, and rotation through a unified GUI",
+            "Animate UV parameters for immediate visual feedback"
+          ]
+        },
+        {
+          "type": "image",
+          "src": "https://static.wixstatic.com/media/34fe06_af99a579ac19444e87741034a3b9efe5~mv2.jpg/v1/fill/w_1182,h_588,al_c,q_85,usm_0.66_1.00_0.01/34fe06_af99a579ac19444e87741034a3b9efe5~mv2.jpg",
+          "alt": "Material viewer tool interface",
+          "caption": ""
+        },
+        {
+          "type": "heading",
+          "text": "Real-Time VFX"
+        },
+        {
+          "type": "text",
+          "text": "In real-time VFX, scrolling textures within materials are widely used, as they offer a cost-effective way to animate the reveal and disappearance of various effects. These textures are animated by scrolling them across UVs."
+        },
+        {
+          "type": "heading",
+          "text": "Purpose"
+        },
+        {
+          "type": "text",
+          "text": "Although artists have many in-engine tools to manipulate textures across UVs, they sometimes have to return to their modeling software and create a whole new UV set just to get their textures to appear the way they want. This tool lets artists preview how textures move across their mesh in Maya, minimizing back-and-forth between applications."
+        },
+        {
+          "type": "image",
+          "src": "https://static.wixstatic.com/media/34fe06_9a1c4bc9bf1546b3892ebd96bb990b72~mv2.gif",
+          "alt": "Animating UV parameters in the material viewer",
+          "caption": ""
+        },
+        {
+          "type": "heading",
+          "text": "Deployed Tool"
+        },
+        {
+          "type": "text",
+          "text": "The tool is driven by Maya's real-time playback along with the place2dTexture node for UV control. Once placed in the designated scripts folder, it can be launched from a pull-down menu."
+        },
+        {
+          "type": "text",
+          "text": "In its current iteration the plugin applies a display material to a mesh. Future development will focus on transferring material and Hypershade data between Unreal and Maya."
+        }
+      ]
+    },
+    {
       "id": "snow-globe",
       "title": "Capturing Snow Globe",
       "term": "Winter 2026",
@@ -269,117 +384,61 @@ window.PORTFOLIO = {
       ]
     },
     {
-      "id": "material-viewer",
-      "title": "Real-Time Material Viewer",
-      "term": "Winter 2026",
-      "status": "Work in progress",
+      "id": "ethiopian-tej",
+      "title": "Ethiopian Tej",
+      "term": "",
+      "status": "",
       "award": "",
       "categories": [
         "featured",
-        "tools"
+        "shaders"
       ],
-      "summary": "A Maya plugin that previews scrolling-texture VFX materials on a mesh's UVs, cutting the back-and-forth with Unreal.",
+      "summary": "A drink still-life rendered with fully procedural materials — no external textures.",
       "tags": [
-        "Python",
-        "Maya Plugin",
-        "Shaders",
-        "VFX Workflow"
+        "Houdini",
+        "Copernicus",
+        "VEX",
+        "Procedural"
       ],
-      "thumb": "https://static.wixstatic.com/media/34fe06_0c4ed1ad353842748e0b3cd552fa306e~mv2.png/v1/fill/w_720,h_405,al_c,q_85,usm_0.66_1.00_0.01/34fe06_0c4ed1ad353842748e0b3cd552fa306e~mv2.png",
-      "preview": "https://static.wixstatic.com/media/34fe06_efe909d146334888b8304593873fb901~mv2.gif",
+      "thumb": "https://static.wixstatic.com/media/34fe06_be0dd2176f77430fafe327814602e78a~mv2.jpg/v1/fill/w_720,h_405,al_c,q_85,usm_0.66_1.00_0.01/34fe06_be0dd2176f77430fafe327814602e78a~mv2.jpg",
+      "preview": "",
       "meta": [
         {
           "label": "Role",
           "value": "Technical Artist"
         },
         {
-          "label": "Team",
-          "value": "1"
-        },
-        {
-          "label": "Duration",
-          "value": "5 weeks"
-        },
-        {
           "label": "Tools",
-          "value": "Python 3 · Maya"
+          "value": "Houdini · Copernicus · VEX"
         }
       ],
       "links": [
         {
-          "label": "Documentation (PDF)",
-          "url": "https://f275549e-8536-4fe6-a52c-9d2f0ab77eaf.filesusr.com/ugd/34fe06_e42f374dfa114cac802f7283cc309667.pdf"
+          "label": "View on ArtStation",
+          "url": "https://www.artstation.com/artwork/GvlwWQ"
         }
       ],
       "body": [
         {
-          "type": "image",
-          "src": "https://static.wixstatic.com/media/34fe06_efe909d146334888b8304593873fb901~mv2.gif",
-          "alt": "Material viewer previewing a scrolling texture in Maya",
+          "type": "youtube",
+          "url": "https://www.youtube.com/watch?v=x2FtB38HtMw",
           "caption": ""
         },
         {
           "type": "heading",
-          "text": "Functionality"
+          "text": "Overview"
         },
         {
           "type": "text",
-          "text": "The Real-Time Material Viewer is a Maya tool designed to quickly set up a preview of how textures interact with a model's UVs in real-time environments such as Unreal Engine. This helps minimize the back-and-forth between programs during iteration."
-        },
-        {
-          "type": "text",
-          "text": "The tool enables artists to:"
+          "text": "A drink still-life rendered with fully procedural materials. I leveraged Houdini's Copernicus for the texturing pipeline and wrote custom wrangle nodes to handle each shader. Everything is generated procedurally — no external textures."
         },
         {
           "type": "list",
           "items": [
-            "Create a reusable display material",
-            "Apply the display material to test geometry or selected meshes",
-            "Select the texture to be displayed",
-            "Choose and apply UV sets",
-            "Quickly test UV tiling, translation, and rotation through a unified GUI",
-            "Animate UV parameters for immediate visual feedback"
+            "Procedural shaders authored with VEX wrangles",
+            "Copernicus-based texturing pipeline",
+            "Cloth simulation"
           ]
-        },
-        {
-          "type": "image",
-          "src": "https://static.wixstatic.com/media/34fe06_af99a579ac19444e87741034a3b9efe5~mv2.jpg/v1/fill/w_1182,h_588,al_c,q_85,usm_0.66_1.00_0.01/34fe06_af99a579ac19444e87741034a3b9efe5~mv2.jpg",
-          "alt": "Material viewer tool interface",
-          "caption": ""
-        },
-        {
-          "type": "heading",
-          "text": "Real-Time VFX"
-        },
-        {
-          "type": "text",
-          "text": "In real-time VFX, scrolling textures within materials are widely used, as they offer a cost-effective way to animate the reveal and disappearance of various effects. These textures are animated by scrolling them across UVs."
-        },
-        {
-          "type": "heading",
-          "text": "Purpose"
-        },
-        {
-          "type": "text",
-          "text": "Although artists have many in-engine tools to manipulate textures across UVs, they sometimes have to return to their modeling software and create a whole new UV set just to get their textures to appear the way they want. This tool lets artists preview how textures move across their mesh in Maya, minimizing back-and-forth between applications."
-        },
-        {
-          "type": "image",
-          "src": "https://static.wixstatic.com/media/34fe06_9a1c4bc9bf1546b3892ebd96bb990b72~mv2.gif",
-          "alt": "Animating UV parameters in the material viewer",
-          "caption": ""
-        },
-        {
-          "type": "heading",
-          "text": "Deployed Tool"
-        },
-        {
-          "type": "text",
-          "text": "The tool is driven by Maya's real-time playback along with the place2dTexture node for UV control. Once placed in the designated scripts folder, it can be launched from a pull-down menu."
-        },
-        {
-          "type": "text",
-          "text": "In its current iteration the plugin applies a display material to a mesh. Future development will focus on transferring material and Hypershade data between Unreal and Maya."
         }
       ]
     },
@@ -488,72 +547,12 @@ window.PORTFOLIO = {
       ]
     },
     {
-      "id": "ethiopian-tej",
-      "title": "Ethiopian Tej",
-      "term": "",
-      "status": "",
-      "award": "",
-      "categories": [
-        "featured",
-        "shaders"
-      ],
-      "summary": "A drink still-life rendered with fully procedural materials — no external textures.",
-      "tags": [
-        "Houdini",
-        "Copernicus",
-        "VEX",
-        "Procedural"
-      ],
-      "thumb": "https://static.wixstatic.com/media/34fe06_be0dd2176f77430fafe327814602e78a~mv2.jpg/v1/fill/w_720,h_405,al_c,q_85,usm_0.66_1.00_0.01/34fe06_be0dd2176f77430fafe327814602e78a~mv2.jpg",
-      "preview": "",
-      "meta": [
-        {
-          "label": "Role",
-          "value": "Technical Artist"
-        },
-        {
-          "label": "Tools",
-          "value": "Houdini · Copernicus · VEX"
-        }
-      ],
-      "links": [
-        {
-          "label": "View on ArtStation",
-          "url": "https://www.artstation.com/artwork/GvlwWQ"
-        }
-      ],
-      "body": [
-        {
-          "type": "youtube",
-          "url": "https://www.youtube.com/watch?v=x2FtB38HtMw",
-          "caption": ""
-        },
-        {
-          "type": "heading",
-          "text": "Overview"
-        },
-        {
-          "type": "text",
-          "text": "A drink still-life rendered with fully procedural materials. I leveraged Houdini's Copernicus for the texturing pipeline and wrote custom wrangle nodes to handle each shader. Everything is generated procedurally — no external textures."
-        },
-        {
-          "type": "list",
-          "items": [
-            "Procedural shaders authored with VEX wrangles",
-            "Copernicus-based texturing pipeline",
-            "Cloth simulation"
-          ]
-        }
-      ]
-    },
-    {
       "id": "saintly-meal",
       "title": "A Saintly Meal",
       "term": "",
       "status": "",
       "award": "",
       "categories": [
-        "featured",
         "shaders"
       ],
       "summary": "Six organic materials authored in Substance Designer, applied in Painter, and lit in Unreal Engine 5.",
