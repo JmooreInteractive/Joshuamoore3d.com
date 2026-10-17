@@ -116,7 +116,7 @@ window.PORTFOLIO = {
       "id": "material-viewer",
       "title": "Real-Time Material Viewer",
       "term": "Winter 2026",
-      "status": "Work in progress",
+      "status": "",
       "award": "",
       "categories": [
         "featured",
@@ -267,12 +267,6 @@ window.PORTFOLIO = {
       "links": [],
       "body": [
         {
-          "type": "image",
-          "src": "https://static.wixstatic.com/media/34fe06_9ef416f5c9164678bba0426a0a2269ea~mv2.gif",
-          "alt": "Snow globe capturing an object in Unreal Engine",
-          "caption": ""
-        },
-        {
           "type": "heading",
           "text": "My Responsibilities"
         },
@@ -291,9 +285,13 @@ window.PORTFOLIO = {
           ]
         },
         {
+          "type": "note",
+          "text": "Kratos's model and textures are property of Santa Monica Studio."
+        },
+        {
           "type": "vimeo",
-          "url": "https://vimeo.com/manage/videos/1234447395",
-          "caption": "Snow globe capture demonstration"
+          "url": "https://vimeo.com/1236724257",
+          "caption": "Snow globe sequence"
         },
         {
           "type": "heading",
@@ -301,11 +299,34 @@ window.PORTFOLIO = {
         },
         {
           "type": "text",
-          "text": "Dithering is used to achieve the ice and transparency effect while maintaining performance. Collision is enabled on the particles to keep the snow within the bounds of the globe."
+          "text": "Although a render target was used to achieve this effect, several techniques were implemented to maintain performance, including:"
         },
         {
-          "type": "note",
-          "text": "Kratos model and textures are property of Santa Monica Studio."
+          "type": "list",
+          "items": [
+            "Dithering used to achieve the ice and transparency effect",
+            "Render target draw stopped during capturing sequence",
+            "Collision-enabled snow particles are culled wirhin bounds of the globe"
+          ]
+        },
+        {
+          "type": "image",
+          "src": "https://static.wixstatic.com/media/34fe06_9ef416f5c9164678bba0426a0a2269ea~mv2.gif",
+          "alt": "Snow globe capturing an object in Unreal Engine",
+          "caption": "Shader Optimization view"
+        },
+        {
+          "type": "heading",
+          "text": "Capturing Effect"
+        },
+        {
+          "type": "text",
+          "text": "The capturing mechanic was implemented by manipulating object visibility and transforms using the render target positioned inside the snow globe."
+        },
+        {
+          "type": "vimeo",
+          "url": "https://vimeo.com/manage/videos/1234447395",
+          "caption": "Snow globe capture demonstration"
         }
       ]
     },
@@ -421,8 +442,9 @@ window.PORTFOLIO = {
       ],
       "body": [
         {
-          "type": "youtube",
-          "url": "https://www.youtube.com/watch?v=x2FtB38HtMw",
+          "type": "image",
+          "src": "assets/img/ethiopian-tej/sav-fall25-vsfx-joshuamoore-05a.png",
+          "alt": "",
           "caption": ""
         },
         {
@@ -440,6 +462,19 @@ window.PORTFOLIO = {
             "Copernicus-based texturing pipeline",
             "Cloth simulation"
           ]
+        },
+        {
+          "type": "youtube",
+          "url": "https://www.youtube.com/watch?v=x2FtB38HtMw",
+          "caption": ""
+        },
+        {
+          "type": "heading",
+          "text": "Procedural Cloth / Thread Shader"
+        },
+        {
+          "type": "text",
+          "text": "Written in Vex, I utilized structs and multi-parms to streamline mathematical operations for thread pattern generation. Implemented three levels of detail and additional parameters, including layer toggling and customizable thread colors."
         }
       ]
     },
